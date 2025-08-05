@@ -694,15 +694,47 @@ class TravisLifeHub {
     }
 
     updateStatusDisplay(status) {
+        console.log('updateStatusDisplay called with:', status);
+        
         const moodElement = document.getElementById('current-mood');
         const checkinElement = document.getElementById('last-checkin');
         const chanceElement = document.getElementById('chance-status');
         const predictedElement = document.getElementById('predicted-action');
         
-        if (moodElement) moodElement.textContent = status.mood;
-        if (checkinElement) checkinElement.textContent = new Date(status.last_checkin).toLocaleString();
-        if (chanceElement) chanceElement.textContent = status.chance_status;
-        if (predictedElement) predictedElement.textContent = status.predicted_next_action;
+        console.log('Found elements:', {
+            moodElement: moodElement,
+            checkinElement: checkinElement,
+            chanceElement: chanceElement,
+            predictedElement: predictedElement
+        });
+        
+        if (moodElement) {
+            moodElement.textContent = status.mood;
+            console.log('Updated mood to:', status.mood);
+        } else {
+            console.error('Mood element not found!');
+        }
+        
+        if (checkinElement) {
+            checkinElement.textContent = new Date(status.last_checkin).toLocaleString();
+            console.log('Updated checkin to:', new Date(status.last_checkin).toLocaleString());
+        } else {
+            console.error('Checkin element not found!');
+        }
+        
+        if (chanceElement) {
+            chanceElement.textContent = status.chance_status;
+            console.log('Updated chance to:', status.chance_status);
+        } else {
+            console.error('Chance element not found!');
+        }
+        
+        if (predictedElement) {
+            predictedElement.textContent = status.predicted_next_action;
+            console.log('Updated predicted to:', status.predicted_next_action);
+        } else {
+            console.error('Predicted element not found!');
+        }
     }
 
     updateDashboard() {
@@ -950,14 +982,43 @@ class TravisLifeHub {
         this.updateRecentActivity();
         this.refreshDebugInfo();
     }
+
+    // Add method to force display update
+    forceDisplayUpdate() {
+        console.log('Force updating display...');
+        console.log('Current data:', this.data);
+        
+        // Force update the status display
+        const status = {
+            mood: this.data.mood,
+            weather: this.data.weather,
+            last_checkin: this.data.last_checkin,
+            chance_status: this.data.chance_status,
+            predicted_next_action: this.data.predicted_next_action,
+            recent_activities: this.data.recent_activities.slice(0, 10)
+        };
+        
+        this.updateStatusDisplay(status);
+        this.updateRecentActivity();
+        this.refreshDebugInfo();
+        
+        console.log('Display update complete');
+    }
 }
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing app...');
     window.app = new TravisLifeHub();
     
     // Check storage availability
     if (!window.app.checkStorageAvailability()) {
         alert('Warning: Local storage is not available. Data will not be saved.');
     }
+    
+    // Force display update after a short delay to ensure everything is loaded
+    setTimeout(() => {
+        console.log('Forcing display update...');
+        window.app.forceDisplayUpdate();
+    }, 100);
 }); 
