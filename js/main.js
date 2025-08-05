@@ -491,9 +491,13 @@ class TravisLifeHub {
     }
 
     logMoodEntry() {
+        console.log('logMoodEntry called');
+        
         const mood = document.getElementById('mood-select').value;
         const energy = document.getElementById('energy-level').value;
         const notes = document.getElementById('mood-notes').value;
+        
+        console.log('Form values:', { mood, energy, notes });
         
         if (!mood) {
             alert('Please select a mood');
@@ -508,6 +512,7 @@ class TravisLifeHub {
             notes: notes
         };
 
+        console.log('Created entry:', entry);
         this.logEntry(entry);
         this.clearMoodForm();
         
@@ -517,6 +522,8 @@ class TravisLifeHub {
     }
 
     logEntry(entry) {
+        console.log('logEntry called with:', entry);
+        
         // Add to recent activities
         this.data.recent_activities.unshift(entry);
         
@@ -527,6 +534,8 @@ class TravisLifeHub {
         
         // Update last check-in
         this.data.last_checkin = new Date().toISOString();
+        
+        console.log('Updated data:', this.data);
         
         // Save to localStorage
         this.saveToLocalStorage();
@@ -595,6 +604,39 @@ class TravisLifeHub {
                 console.log('Data loaded successfully:', this.data);
             } else {
                 console.log('No saved data found, using defaults');
+                // Add some sample data for demonstration
+                this.data = {
+                    mood: 'Good',
+                    weather: 'Sunny',
+                    last_checkin: new Date().toISOString(),
+                    chance_status: 'Fed and walked',
+                    predicted_next_action: 'Work on projects',
+                    recent_activities: [
+                        {
+                            type: 'mood',
+                            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                            mood: 'Good',
+                            energy: 8,
+                            notes: 'Feeling productive today!'
+                        },
+                        {
+                            type: 'chance',
+                            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+                            activity: 'walked',
+                            duration: 30,
+                            notes: 'Great walk in the park'
+                        },
+                        {
+                            type: 'music',
+                            timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+                            title: 'New Album - Artist',
+                            rating: 9,
+                            notes: 'Really digging this new sound'
+                        }
+                    ]
+                };
+                // Save the sample data
+                this.saveToLocalStorage();
             }
         } catch (error) {
             console.error('Error loading data:', error);
@@ -825,6 +867,23 @@ class TravisLifeHub {
         } catch (error) {
             console.error('Error clearing data:', error);
             this.showNotification('Error clearing data.', 'error');
+        }
+    }
+
+    // Add missing handleQuickAction method
+    handleQuickAction(action) {
+        switch(action) {
+            case 'mood':
+                this.switchTab('mood');
+                break;
+            case 'chance':
+                this.switchTab('chance');
+                break;
+            case 'music':
+                this.switchTab('music');
+                break;
+            default:
+                console.log('Unknown action:', action);
         }
     }
 
