@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travis Life Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'travis-blue': '#1e40af',
+                        'travis-green': '#059669'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar Navigation -->
+        <div class="w-64 bg-white shadow-lg border-r border-gray-200">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Travis Life Hub</h1>
+                <p class="text-sm text-gray-600">Real-time personal dashboard</p>
+            </div>
+            
+            <nav class="mt-6">
+                <div class="px-4">
+                    <a href="#" class="tab-link active flex items-center px-4 py-3 text-gray-700 bg-blue-50 border-l-4 border-travis-blue rounded-r-lg mb-2" data-tab="dashboard">
+                        <span class="mr-3">📊</span>
+                        Dashboard
+                    </a>
+                    <a href="#" class="tab-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2" data-tab="finance">
+                        <span class="mr-3">💰</span>
+                        Finance
+                    </a>
+                    <a href="#" class="tab-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2" data-tab="health">
+                        <span class="mr-3">🏥</span>
+                        Health
+                    </a>
+                    <a href="#" class="tab-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2" data-tab="chance">
+                        <span class="mr-3">🐕</span>
+                        Chance
+                    </a>
+                    <a href="#" class="tab-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2" data-tab="music">
+                        <span class="mr-3">🎵</span>
+                        Music
+                    </a>
+                    <a href="#" class="tab-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2" data-tab="goals">
+                        <span class="mr-3">🎯</span>
+                        Goals
+                    </a>
+                    <a href="#" class="tab-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2" data-tab="projects">
+                        <span class="mr-3">💻</span>
+                        Projects
+                    </a>
+                    <a href="#" class="tab-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg mb-2" data-tab="mood">
+                        <span class="mr-3">😊</span>
+                        Mood
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <h2 id="page-title" class="text-xl font-semibold text-gray-800">Dashboard</h2>
+                    <div class="flex space-x-3">
+                        <button id="export-btn" class="px-4 py-2 bg-travis-green text-white rounded-lg hover:bg-green-600 transition-colors">
+                            Export Data
+                        </button>
+                        <button id="refresh-btn" class="px-4 py-2 bg-travis-blue text-white rounded-lg hover:bg-blue-600 transition-colors">
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="flex-1 p-6 overflow-auto">
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Status Summary -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Current Status</h3>
+                            <div id="status-summary" class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Mood:</span>
+                                    <span id="current-mood" class="font-medium">Loading...</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Last Check-in:</span>
+                                    <span id="last-checkin" class="font-medium">Loading...</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Chance Status:</span>
+                                    <span id="chance-status" class="font-medium">Loading...</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Predicted Next Action:</span>
+                                    <span id="predicted-action" class="font-medium">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button class="w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+                                    Log Mood
+                                </button>
+                                <button class="w-full px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
+                                    Log Chance Activity
+                                </button>
+                                <button class="w-full px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">
+                                    Log Music
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
+                            <div id="recent-activity" class="space-y-2 text-sm">
+                                <div class="text-gray-500">Loading recent activity...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Chat Integration (Optional) -->
+                    <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">AI Assistant</h3>
+                        <div class="flex space-x-3">
+                            <input type="text" id="ai-input" placeholder="Ask about your data..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-travis-blue focus:border-transparent">
+                            <button id="ai-send" class="px-6 py-2 bg-travis-blue text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                Send
+                            </button>
+                        </div>
+                        <div id="ai-response" class="mt-4 p-4 bg-gray-50 rounded-lg min-h-[100px]">
+                            <p class="text-gray-500">AI responses will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other tab contents will be loaded dynamically -->
+                <div id="finance" class="tab-content hidden"></div>
+                <div id="health" class="tab-content hidden"></div>
+                <div id="chance" class="tab-content hidden"></div>
+                <div id="music" class="tab-content hidden"></div>
+                <div id="goals" class="tab-content hidden"></div>
+                <div id="projects" class="tab-content hidden"></div>
+                <div id="mood" class="tab-content hidden"></div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html> 
