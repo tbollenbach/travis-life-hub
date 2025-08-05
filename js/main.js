@@ -603,7 +603,7 @@ class TravisLifeHub {
                 this.data = { ...this.data, ...parsedData };
                 console.log('Data loaded successfully:', this.data);
             } else {
-                console.log('No saved data found, using defaults');
+                console.log('No saved data found, creating sample data');
                 // Add some sample data for demonstration
                 this.data = {
                     mood: 'Good',
@@ -635,13 +635,27 @@ class TravisLifeHub {
                         }
                     ]
                 };
-                // Save the sample data
+                // Save the sample data immediately
                 this.saveToLocalStorage();
+                console.log('Sample data created and saved:', this.data);
             }
         } catch (error) {
             console.error('Error loading data:', error);
-            // If there's an error, keep the default data
+            // If there's an error, create default data
+            this.data = {
+                mood: 'Good',
+                weather: 'Sunny',
+                last_checkin: new Date().toISOString(),
+                chance_status: 'Fed and walked',
+                predicted_next_action: 'Work on projects',
+                recent_activities: []
+            };
         }
+        
+        // Force update the display immediately
+        this.updateStatus();
+        this.updateRecentActivity();
+        this.refreshDebugInfo();
     }
 
     saveToLocalStorage() {
@@ -1003,6 +1017,56 @@ class TravisLifeHub {
         this.refreshDebugInfo();
         
         console.log('Display update complete');
+    }
+    
+    // Add method to force reset data
+    forceResetData() {
+        console.log('Force resetting data...');
+        
+        // Clear localStorage
+        localStorage.removeItem('travis-life-hub-data');
+        localStorage.removeItem('travis-life-hub-status');
+        
+        // Reset data to sample data
+        this.data = {
+            mood: 'Good',
+            weather: 'Sunny',
+            last_checkin: new Date().toISOString(),
+            chance_status: 'Fed and walked',
+            predicted_next_action: 'Work on projects',
+            recent_activities: [
+                {
+                    type: 'mood',
+                    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                    mood: 'Good',
+                    energy: 8,
+                    notes: 'Feeling productive today!'
+                },
+                {
+                    type: 'chance',
+                    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+                    activity: 'walked',
+                    duration: 30,
+                    notes: 'Great walk in the park'
+                },
+                {
+                    type: 'music',
+                    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+                    title: 'New Album - Artist',
+                    rating: 9,
+                    notes: 'Really digging this new sound'
+                }
+            ]
+        };
+        
+        // Save the new data
+        this.saveToLocalStorage();
+        
+        // Update display
+        this.updateDashboard();
+        
+        console.log('Data reset complete');
+        this.showNotification('Data reset successfully!', 'success');
     }
 }
 
