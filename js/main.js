@@ -539,6 +539,8 @@ class TravisLifeHub {
         
         // Show success message
         this.showNotification('Entry logged successfully!', 'success');
+        
+        console.log('Entry logged:', entry);
     }
 
     clearFinanceForm() {
@@ -587,18 +589,43 @@ class TravisLifeHub {
         try {
             const saved = localStorage.getItem('travis-life-hub-data');
             if (saved) {
-                this.data = { ...this.data, ...JSON.parse(saved) };
+                const parsedData = JSON.parse(saved);
+                // Merge with default data to ensure all properties exist
+                this.data = { ...this.data, ...parsedData };
+                console.log('Data loaded successfully:', this.data);
+            } else {
+                console.log('No saved data found, using defaults');
             }
         } catch (error) {
             console.error('Error loading data:', error);
+            // If there's an error, keep the default data
         }
     }
 
     saveToLocalStorage() {
         try {
-            localStorage.setItem('travis-life-hub-data', JSON.stringify(this.data));
+            const dataToSave = {
+                mood: this.data.mood,
+                weather: this.data.weather,
+                last_checkin: this.data.last_checkin,
+                chance_status: this.data.chance_status,
+                predicted_next_action: this.data.predicted_next_action,
+                recent_activities: this.data.recent_activities
+            };
+            
+            localStorage.setItem('travis-life-hub-data', JSON.stringify(dataToSave));
+            console.log('Data saved successfully:', dataToSave);
+            
+            // Also save a backup with timestamp
+            const backupKey = `travis-life-hub-backup-${new Date().toISOString().split('T')[0]}`;
+            localStorage.setItem(backupKey, JSON.stringify(dataToSave));
+            
+            // Update debug info
+            this.refreshDebugInfo();
+            
         } catch (error) {
             console.error('Error saving data:', error);
+            this.showNotification('Error saving data. Please check your browser storage.', 'error');
         }
     }
 
@@ -614,26 +641,38 @@ class TravisLifeHub {
         };
 
         // Save status.json (in localStorage for now, but could be sent to server)
-        localStorage.setItem('travis-life-hub-status', JSON.stringify(status, null, 2));
+        try {
+            localStorage.setItem('travis-life-hub-status', JSON.stringify(status, null, 2));
+        } catch (error) {
+            console.error('Error saving status:', error);
+        }
         
         // Update display
         this.updateStatusDisplay(status);
     }
 
     updateStatusDisplay(status) {
-        document.getElementById('current-mood').textContent = status.mood;
-        document.getElementById('last-checkin').textContent = new Date(status.last_checkin).toLocaleString();
-        document.getElementById('chance-status').textContent = status.chance_status;
-        document.getElementById('predicted-action').textContent = status.predicted_next_action;
+        const moodElement = document.getElementById('current-mood');
+        const checkinElement = document.getElementById('last-checkin');
+        const chanceElement = document.getElementById('chance-status');
+        const predictedElement = document.getElementById('predicted-action');
+        
+        if (moodElement) moodElement.textContent = status.mood;
+        if (checkinElement) checkinElement.textContent = new Date(status.last_checkin).toLocaleString();
+        if (chanceElement) chanceElement.textContent = status.chance_status;
+        if (predictedElement) predictedElement.textContent = status.predicted_next_action;
     }
 
     updateDashboard() {
         this.updateStatus();
         this.updateRecentActivity();
+        this.refreshDebugInfo();
     }
 
     updateRecentActivity() {
         const container = document.getElementById('recent-activity');
+        if (!container) return;
+        
         const activities = this.data.recent_activities.slice(0, 5);
         
         if (activities.length === 0) {
@@ -740,7 +779,9 @@ class TravisLifeHub {
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
-            type === 'success' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+            type === 'success' ? 'bg-green-500 text-white' : 
+            type === 'error' ? 'bg-red-500 text-white' : 
+            'bg-blue-500 text-white'
         }`;
         notification.textContent = message;
         
@@ -748,12 +789,116 @@ class TravisLifeHub {
         
         // Remove after 3 seconds
         setTimeout(() => {
-            document.body.removeChild(notification);
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
         }, 3000);
+    }
+
+    // Add method to check storage availability
+    checkStorageAvailability() {
+        try {
+            const test = 'test';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // Add method to clear all data
+    clearAllData() {
+        try {
+            localStorage.removeItem('travis-life-hub-data');
+            localStorage.removeItem('travis-life-hub-status');
+            this.data = {
+                mood: 'Unknown',
+                weather: 'Unknown',
+                last_checkin: new Date().toISOString(),
+                chance_status: 'Unknown',
+                predicted_next_action: 'Unknown',
+                recent_activities: []
+            };
+            this.updateDashboard();
+            this.showNotification('All data cleared successfully!', 'success');
+        } catch (error) {
+            console.error('Error clearing data:', error);
+            this.showNotification('Error clearing data.', 'error');
+        }
+    }
+
+    // Add debug methods
+    refreshDebugInfo() {
+        const storageStatus = document.getElementById('storage-status');
+        const dataCount = document.getElementById('data-count');
+        const lastSave = document.getElementById('last-save');
+        
+        if (storageStatus) {
+            storageStatus.textContent = this.checkStorageAvailability() ? 'Available' : 'Not Available';
+        }
+        
+        if (dataCount) {
+            dataCount.textContent = this.data.recent_activities.length;
+        }
+        
+        if (lastSave) {
+            const saved = localStorage.getItem('travis-life-hub-data');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    lastSave.textContent = new Date(parsed.last_checkin || Date.now()).toLocaleString();
+                } catch (e) {
+                    lastSave.textContent = 'Error reading';
+                }
+            } else {
+                lastSave.textContent = 'Never';
+            }
+        }
+    }
+
+    // Override saveToLocalStorage to update debug info
+    saveToLocalStorage() {
+        try {
+            const dataToSave = {
+                mood: this.data.mood,
+                weather: this.data.weather,
+                last_checkin: this.data.last_checkin,
+                chance_status: this.data.chance_status,
+                predicted_next_action: this.data.predicted_next_action,
+                recent_activities: this.data.recent_activities
+            };
+            
+            localStorage.setItem('travis-life-hub-data', JSON.stringify(dataToSave));
+            console.log('Data saved successfully:', dataToSave);
+            
+            // Also save a backup with timestamp
+            const backupKey = `travis-life-hub-backup-${new Date().toISOString().split('T')[0]}`;
+            localStorage.setItem(backupKey, JSON.stringify(dataToSave));
+            
+            // Update debug info
+            this.refreshDebugInfo();
+            
+        } catch (error) {
+            console.error('Error saving data:', error);
+            this.showNotification('Error saving data. Please check your browser storage.', 'error');
+        }
+    }
+
+    // Override updateDashboard to include debug refresh
+    updateDashboard() {
+        this.updateStatus();
+        this.updateRecentActivity();
+        this.refreshDebugInfo();
     }
 }
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new TravisLifeHub();
+    
+    // Check storage availability
+    if (!window.app.checkStorageAvailability()) {
+        alert('Warning: Local storage is not available. Data will not be saved.');
+    }
 }); 
