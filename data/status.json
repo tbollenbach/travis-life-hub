@@ -1,8 +1,23 @@
 {
-  "mood": "Unknown",
+  "mood": "stressed",
   "weather": "Unknown",
-  "last_checkin": "2025-01-27T00:00:00.000Z",
+  "last_checkin": "2025-08-05T23:58:33.410Z",
   "chance_status": "Unknown",
   "predicted_next_action": "Unknown",
-  "recent_activities": []
-} 
+  "recent_activities": [
+    {
+      "type": "chance",
+      "timestamp": "2025-08-05T23:58:33.409Z",
+      "activity": "played",
+      "duration": 5,
+      "notes": "chance has a red spot on his butt that he keeps scratching"
+    },
+    {
+      "type": "mood",
+      "timestamp": "2025-08-05T23:58:00.138Z",
+      "mood": "stressed",
+      "energy": 5,
+      "notes": "feeling fucking stressed over this project"
+    }
+  ]
+}

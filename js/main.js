@@ -41,6 +41,16 @@ class TravisLifeHub {
             this.updateDashboard();
         });
 
+        // Push to GitHub button
+        document.getElementById('push-github-btn').addEventListener('click', () => {
+            this.pushToGitHub();
+        });
+
+        // Copy to Clipboard button
+        document.getElementById('copy-clipboard-btn').addEventListener('click', () => {
+            this.copyToClipboard();
+        });
+
         // AI chat
         document.getElementById('ai-send').addEventListener('click', () => {
             this.handleAIChat();
@@ -537,8 +547,9 @@ class TravisLifeHub {
         
         console.log('Updated data:', this.data);
         
-        // Save to localStorage
+        // Save to both localStorage and server
         this.saveToLocalStorage();
+        this.saveToServer(this.data);
         
         // Update status.json
         this.updateStatus();
@@ -595,67 +606,72 @@ class TravisLifeHub {
     }
 
     loadStatus() {
-        try {
-            const saved = localStorage.getItem('travis-life-hub-data');
-            if (saved) {
-                const parsedData = JSON.parse(saved);
-                // Merge with default data to ensure all properties exist
-                this.data = { ...this.data, ...parsedData };
-                console.log('Data loaded successfully:', this.data);
+        // First try to load from server, then fallback to localStorage
+        this.loadFromServer().then(serverData => {
+            if (serverData) {
+                this.data = { ...this.data, ...serverData };
+                console.log('Data loaded from server successfully:', this.data);
             } else {
-                console.log('No saved data found, creating sample data');
-                // Add some sample data for demonstration
-                this.data = {
-                    mood: 'Good',
-                    weather: 'Sunny',
-                    last_checkin: new Date().toISOString(),
-                    chance_status: 'Fed and walked',
-                    predicted_next_action: 'Work on projects',
-                    recent_activities: [
-                        {
-                            type: 'mood',
-                            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-                            mood: 'Good',
-                            energy: 8,
-                            notes: 'Feeling productive today!'
-                        },
-                        {
-                            type: 'chance',
-                            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-                            activity: 'walked',
-                            duration: 30,
-                            notes: 'Great walk in the park'
-                        },
-                        {
-                            type: 'music',
-                            timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-                            title: 'New Album - Artist',
-                            rating: 9,
-                            notes: 'Really digging this new sound'
-                        }
-                    ]
-                };
-                // Save the sample data immediately
-                this.saveToLocalStorage();
-                console.log('Sample data created and saved:', this.data);
+                // Fallback to localStorage
+                try {
+                    const saved = localStorage.getItem('travis-life-hub-data');
+                    if (saved) {
+                        const parsedData = JSON.parse(saved);
+                        this.data = { ...this.data, ...parsedData };
+                        console.log('Data loaded from localStorage:', this.data);
+                    } else {
+                        console.log('No saved data found, creating sample data');
+                        this.createSampleData();
+                    }
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    this.createSampleData();
+                }
             }
-        } catch (error) {
-            console.error('Error loading data:', error);
-            // If there's an error, create default data
-            this.data = {
-                mood: 'Good',
-                weather: 'Sunny',
-                last_checkin: new Date().toISOString(),
-                chance_status: 'Fed and walked',
-                predicted_next_action: 'Work on projects',
-                recent_activities: []
-            };
-        }
-        
-        // Force update the display immediately
-        this.updateStatus();
-        this.updateRecentActivity();
-        this.refreshDebugInfo();
+            
+            // Force update the display immediately
+            this.updateStatus();
+            this.updateRecentActivity();
+            this.refreshDebugInfo();
+        });
+    }
+
+    createSampleData() {
+        // Add some sample data for demonstration
+        this.data = {
+            mood: 'Good',
+            weather: 'Sunny',
+            last_checkin: new Date().toISOString(),
+            chance_status: 'Fed and walked',
+            predicted_next_action: 'Work on projects',
+            recent_activities: [
+                {
+                    type: 'mood',
+                    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                    mood: 'Good',
+                    energy: 8,
+                    notes: 'Feeling productive today!'
+                },
+                {
+                    type: 'chance',
+                    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+                    activity: 'walked',
+                    duration: 30,
+                    notes: 'Great walk in the park'
+                },
+                {
+                    type: 'music',
+                    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+                    title: 'New Album - Artist',
+                    rating: 9,
+                    notes: 'Really digging this new sound'
+                }
+            ]
+        };
+        // Save the sample data immediately
+        this.saveToLocalStorage();
+        this.saveToServer(this.data);
+        console.log('Sample data created and saved:', this.data);
     }
 
     saveToLocalStorage() {
@@ -670,7 +686,7 @@ class TravisLifeHub {
             };
             
             localStorage.setItem('travis-life-hub-data', JSON.stringify(dataToSave));
-            console.log('Data saved successfully:', dataToSave);
+            console.log('Data saved to localStorage successfully:', dataToSave);
             
             // Also save a backup with timestamp
             const backupKey = `travis-life-hub-backup-${new Date().toISOString().split('T')[0]}`;
@@ -680,8 +696,49 @@ class TravisLifeHub {
             this.refreshDebugInfo();
             
         } catch (error) {
-            console.error('Error saving data:', error);
+            console.error('Error saving to localStorage:', error);
             this.showNotification('Error saving data. Please check your browser storage.', 'error');
+        }
+    }
+
+    // Add server-side data persistence methods
+    async saveToServer(data) {
+        try {
+            const response = await fetch('/save-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                console.log('Data saved to server successfully');
+                return true;
+            } else {
+                console.error('Failed to save to server:', response.statusText);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error saving to server:', error);
+            return false;
+        }
+    }
+
+    async loadFromServer() {
+        try {
+            const response = await fetch('/data/status.json');
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Data loaded from server:', data);
+                return data;
+            } else {
+                console.error('Failed to load from server:', response.statusText);
+                return null;
+            }
+        } catch (error) {
+            console.error('Error loading from server:', error);
+            return null;
         }
     }
 
@@ -823,6 +880,46 @@ class TravisLifeHub {
         URL.revokeObjectURL(url);
 
         this.showNotification('Data exported successfully!', 'success');
+    }
+
+    async pushToGitHub() {
+        try {
+            // Show loading state
+            const pushBtn = document.getElementById('push-github-btn');
+            const originalText = pushBtn.textContent;
+            pushBtn.textContent = 'Pushing...';
+            pushBtn.disabled = true;
+            
+            // Send data to server for GitHub push
+            const response = await fetch('/push-to-github', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    data: this.data,
+                    timestamp: new Date().toISOString()
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                this.showNotification('Data pushed to GitHub successfully!', 'success');
+                console.log('GitHub push result:', result);
+            } else {
+                const error = await response.json();
+                this.showNotification(`Failed to push to GitHub: ${error.message}`, 'error');
+                console.error('GitHub push failed:', error);
+            }
+        } catch (error) {
+            console.error('Error pushing to GitHub:', error);
+            this.showNotification('Error pushing to GitHub. Check console for details.', 'error');
+        } finally {
+            // Restore button state
+            const pushBtn = document.getElementById('push-github-btn');
+            pushBtn.textContent = 'Push to GitHub';
+            pushBtn.disabled = false;
+        }
     }
 
     handleAIChat() {
@@ -1059,14 +1156,36 @@ class TravisLifeHub {
             ]
         };
         
-        // Save the new data
+        // Save the new data to both localStorage and server
         this.saveToLocalStorage();
+        this.saveToServer(this.data);
         
         // Update display
         this.updateDashboard();
         
         console.log('Data reset complete');
         this.showNotification('Data reset successfully!', 'success');
+    }
+
+    // Add method to copy data to clipboard
+    copyToClipboard() {
+        const dataToCopy = {
+            mood: this.data.mood,
+            weather: this.data.weather,
+            last_checkin: this.data.last_checkin,
+            chance_status: this.data.chance_status,
+            predicted_next_action: this.data.predicted_next_action,
+            recent_activities: this.data.recent_activities
+        };
+
+        const dataString = JSON.stringify(dataToCopy, null, 2);
+        navigator.clipboard.writeText(dataString).then(() => {
+            this.showNotification('Data copied to clipboard!', 'success');
+            console.log('Data copied to clipboard:', dataString);
+        }).catch(err => {
+            console.error('Failed to copy data to clipboard:', err);
+            this.showNotification('Failed to copy data to clipboard.', 'error');
+        });
     }
 }
 
